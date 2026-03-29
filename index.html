@@ -32,10 +32,12 @@
         .sidebar-header .logo-plus { color: var(--gold); font-size: 34px; font-weight: 800; margin-left: 3px; line-height: 1; }
         
         .menu-item { padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a4b50; font-size: 14px; font-weight: 600; transition: 0.2s; }
-        .menu-item:hover, .menu-item.active { background-color: var(--sidebar-hover); color: var(--gold); }
+        .menu-item.active { background-color: var(--sidebar-hover); color: var(--gold); border-left: 4px solid var(--gold); }
         
         /* Sidebar Truck Graphic & Animations */
         .sidebar-truck { margin-top: auto; padding: 30px; text-align: center; border-top: 1px solid #4a4b50; background: #2a2b30; }
+        .sidebar-contact { margin-top: 15px; font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.5px; }
+        
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes bump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
         @keyframes moveRoad { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 15; } }
@@ -49,23 +51,32 @@
         /* Main Content Area */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
         
-        /* Top Navigation Bar & Dropdowns */
+        /* Top Navigation Bar */
         .top-bar { background: #fff; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 10; flex-shrink: 0; }
-        .search-container input { padding: 10px 15px; width: 400px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; outline: none; transition: border-color 0.2s; }
-        .search-container input:focus { border-color: var(--gold); }
+        .top-title { font-size: 1.2rem; font-weight: 700; color: #2c3e50; }
+        
+        /* Filter Controls Section */
+        .view-section { padding: 30px; }
+        .filter-card { background: #fff; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); padding: 20px; margin-bottom: 20px; display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; border-top: 4px solid var(--gold); }
+        
+        .input-group { display: flex; flex-direction: column; flex-grow: 1; min-width: 250px; }
+        .input-group label { font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        
+        .filter-select, .filter-input { padding: 10px 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; font-weight: 600; color: #333; outline: none; transition: border-color 0.2s; width: 100%; background: #f9fafc; }
+        .filter-select:focus, .filter-input:focus { border-color: var(--gold); background: #fff; box-shadow: 0 0 0 2px rgba(255, 198, 0, 0.2); }
         
         /* Tables & Content */
-        .view-section { padding: 30px; }
-        .view-title { font-size: 24px; margin-bottom: 15px; color: #333; font-weight: 700; }
-        
-        .table-wrapper { background: #fff; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); padding: 20px; margin-top: 10px; overflow-x: auto; }
+        .table-wrapper { background: #fff; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); padding: 20px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
         th { background: #f4f6f9; padding: 12px; color: #555; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid var(--border); font-weight: 700; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
         tr:hover td { background-color: #fcfcfc; }
+        
+        .customer-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; background: #e2e8f0; color: #475569; }
         a.email-link { color: #0066cc; font-weight: 700; }
         a.email-link:hover { text-decoration: underline; }
-        .no-data { text-align: center; padding: 2rem; color: #888; font-style: italic; }
+        .no-data { text-align: center; padding: 3rem; color: #888; font-style: italic; font-size: 14px; }
+        .empty-dash { color: #cbd5e1; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -87,10 +98,12 @@
             <span class="logo-plus">+</span>
         </div>
 
-        <div class="menu-item active" id="tab-garda" onclick="switchTab('Garda')">Garda Vendors</div>
-        <div class="menu-item" id="tab-brinks" onclick="switchTab('Brinks')">Brinks Vendors</div>
+        <div class="menu-item active">
+            Vendor Search
+        </div>
         
         <div class="sidebar-truck">
+            <div style="font-weight: 800; color: var(--gold); letter-spacing: 1px; margin-bottom: 15px; font-size: 12px;">KEEP ON ROLLING</div>
             <svg width="140" height="70" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg" class="moving-truck-svg">
                 <line class="road-line" x1="0" y1="57" x2="120" y2="57" stroke="#4a4b50" stroke-width="2" stroke-dasharray="10 5"/>
                 <g class="truck-body">
@@ -120,31 +133,45 @@
                     <line x1="85" y1="50" x2="99" y2="50" stroke="#888" stroke-width="1"/>
                 </g>
             </svg>
+            <div class="sidebar-contact">sales@ameritfleet.com</div>
         </div>
     </div>
 
     <div class="main-content">
         <div class="top-bar">
-            <div class="search-container">
-                <input type="text" id="location-search" list="locations" placeholder="Search or Select Location Group..." oninput="filterTable()">
-                <datalist id="locations"></datalist>
-            </div>
+            <div class="top-title">National Vendor Network</div>
         </div>
 
         <div class="view-section">
-            <div class="view-title" id="view-title-text">Garda Vendors</div>
+            
+            <div class="filter-card">
+                <div class="input-group" style="flex: 0.5;">
+                    <label for="customer-select">Customer Group</label>
+                    <select id="customer-select" class="filter-select" onchange="handleCustomerChange()">
+                        <option value="ALL">All Customers</option>
+                        </select>
+                </div>
+
+                <div class="input-group" style="flex: 1.5;">
+                    <label for="location-search">Branch / Location Search</label>
+                    <input type="text" id="location-search" class="filter-input" list="locations" placeholder="Type or select a location..." oninput="renderTable()">
+                    <datalist id="locations"></datalist>
+                </div>
+            </div>
             
             <div class="table-wrapper">
                 <table id="vendor-table">
                     <thead>
                         <tr>
-                            <th>Vendor Name</th>
-                            <th>Contact Email</th>
-                            <th>Contact Phone</th>
+                            <th style="width: 15%;">Customer</th>
+                            <th style="width: 25%;">Location / Group</th>
+                            <th style="width: 25%;">Vendor Name</th>
+                            <th style="width: 20%;">Contact Email</th>
+                            <th style="width: 15%;">Contact Phone</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
-                        <tr><td colspan="3" class="no-data">Initializing Data Fetch...</td></tr>
+                        <tr><td colspan="5" class="no-data">Initializing Data Fetch...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -153,20 +180,19 @@
 
     <script>
         // --- APP LOGIC --- //
-        let currentDataset = 'Garda';
-        let parsedData = { Garda: [], Brinks: [] };
+        let allVendors = []; 
+        let uniqueCustomers = new Set();
 
+        const customerSelect = document.getElementById('customer-select');
         const searchInput = document.getElementById('location-search');
         const dataList = document.getElementById('locations');
         const tableBody = document.getElementById('table-body');
-        const titleText = document.getElementById('view-title-text');
 
         // 1. Fetch and Parse the Excel File
         async function loadExcelFile() {
             try {
-                tableBody.innerHTML = '<tr><td colspan="3" class="no-data">Loading vendor data...</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="5" class="no-data">Loading vendor network...</td></tr>';
                 
-                // Fetch the file locally or from the server
                 const response = await fetch('./vendor_locator.xlsx');
                 
                 if (!response.ok) throw new Error('File not found or access denied');
@@ -174,57 +200,75 @@
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 
-                // 2. Extract data from the specific tabs
-                if (workbook.SheetNames.includes('Garda')) {
-                    parsedData.Garda = formatExcelData(XLSX.utils.sheet_to_json(workbook.Sheets['Garda']));
-                }
-                if (workbook.SheetNames.includes('Brinks')) {
-                    parsedData.Brinks = formatExcelData(XLSX.utils.sheet_to_json(workbook.Sheets['Brinks']));
-                }
+                // 2. Extract data, format it, and push to the master array
+                workbook.SheetNames.forEach(sheetName => {
+                    // Ignore empty or hidden sheets if any
+                    const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                    if (sheetData.length > 0) {
+                        uniqueCustomers.add(sheetName);
+                        const formattedData = formatExcelData(sheetData, sheetName);
+                        allVendors = allVendors.concat(formattedData);
+                    }
+                });
 
-                // 3. Initialize the UI
-                populateDropdown();
-                switchTab(currentDataset); 
+                // 3. Initialize UI
+                populateCustomerDropdown();
+                updateLocationDropdown(); 
+                renderTable(); 
 
             } catch (error) {
                 console.error("Error loading Excel file:", error);
-                tableBody.innerHTML = `<tr><td colspan="3" class="no-data" style="color: #d9534f;"><b>Error:</b> Could not load vendor_locator.xlsx. <br><br>Ensure the file is in the same folder. If you are testing this locally on your desktop, browser security settings (CORS) may block local file fetching. Host it on a server or use a local dev server to test.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="no-data" style="color: #d9534f;"><b>Error:</b> Could not load vendor_locator.xlsx. <br><br>Make sure the file is in the same folder. (Remember to host this on a server to bypass local CORS restrictions).</td></tr>`;
             }
         }
 
-        // Map the Excel columns to our table format
-        function formatExcelData(jsonArray) {
-            return jsonArray.map(row => ({
-                group: (row['Group'] || '').toString().trim(),
-                vendor: (row['Vendor'] || '').toString().trim(),
-                email: (row['Contact Email'] || 'N/A').toString().trim(),
-                phone: (row['Contact Phone#'] || 'N/A').toString().trim()
-            })).filter(item => item.group !== ''); 
+        // Map the Excel columns to our master object
+        function formatExcelData(jsonArray, customerName) {
+            return jsonArray.map(row => {
+                let emailRaw = (row['Contact Email'] || '').toString().trim();
+                let phoneRaw = (row['Contact Phone#'] || '').toString().trim();
+
+                // Clean up "N/A" entries to be empty strings for cleaner logic later
+                if (emailRaw.toUpperCase() === 'N/A') emailRaw = '';
+                if (phoneRaw.toUpperCase() === 'N/A') phoneRaw = '';
+
+                return {
+                    customer: customerName,
+                    group: (row['Group'] || '').toString().trim(),
+                    vendor: (row['Vendor'] || '').toString().trim(),
+                    email: emailRaw,
+                    phone: phoneRaw
+                };
+            }).filter(item => item.group !== ''); // Drop rows that have no location
         }
 
-        function switchTab(tabName) {
-            currentDataset = tabName;
-            
-            // Update UI styling for Sidebar
-            document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('tab-' + tabName.toLowerCase()).classList.add('active');
-            
-            titleText.innerText = tabName + ' Vendors';
-            
-            // Reset search and table
-            searchInput.value = '';
-            
-            if (parsedData[currentDataset].length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="no-data">No data found in the ' + tabName + ' tab.</td></tr>';
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="3" class="no-data">Select a location to view vendors</td></tr>';
+        function populateCustomerDropdown() {
+            // Keep the "ALL" option, add the dynamic ones
+            Array.from(uniqueCustomers).sort().forEach(cust => {
+                const option = document.createElement('option');
+                option.value = cust;
+                option.innerText = cust;
+                customerSelect.appendChild(option);
+            });
+        }
+
+        function handleCustomerChange() {
+            // Clear the location search so they aren't stuck with a search for a different customer
+            searchInput.value = ''; 
+            updateLocationDropdown();
+            renderTable();
+        }
+
+        function updateLocationDropdown() {
+            const selectedCustomer = customerSelect.value;
+            let filteredLocations = allVendors;
+
+            if (selectedCustomer !== 'ALL') {
+                filteredLocations = allVendors.filter(v => v.customer === selectedCustomer);
             }
-            
-            populateDropdown();
-        }
 
-        function populateDropdown() {
-            const uniqueLocations = [...new Set(parsedData[currentDataset].map(item => item.group))].sort();
+            const uniqueLocations = [...new Set(filteredLocations.map(item => item.group))].sort();
+            
             dataList.innerHTML = '';
             uniqueLocations.forEach(loc => {
                 const option = document.createElement('option');
@@ -233,26 +277,54 @@
             });
         }
 
-        function filterTable() {
+        function renderTable() {
+            const selectedCustomer = customerSelect.value;
             const searchTerm = searchInput.value.toLowerCase();
-            const filteredData = parsedData[currentDataset].filter(item => item.group.toLowerCase() === searchTerm);
 
+            // Apply Filters
+            let filteredData = allVendors;
+            
+            if (selectedCustomer !== 'ALL') {
+                filteredData = filteredData.filter(item => item.customer === selectedCustomer);
+            }
+            
+            if (searchTerm !== '') {
+                filteredData = filteredData.filter(item => item.group.toLowerCase().includes(searchTerm));
+            }
+
+            // Render Output
             if (filteredData.length === 0) {
                 if(searchTerm === '') {
-                    tableBody.innerHTML = '<tr><td colspan="3" class="no-data">Select a location to view vendors</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="5" class="no-data">Select a location to view vendors.</td></tr>';
                 } else {
-                    tableBody.innerHTML = '<tr><td colspan="3" class="no-data">No vendors found for this location.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="5" class="no-data">No vendors found matching your filters.</td></tr>';
                 }
                 return;
             }
 
-            tableBody.innerHTML = filteredData.map(item => `
-                <tr>
-                    <td><strong>${item.vendor}</strong></td>
-                    <td>${item.email !== 'N/A' ? `<a href="mailto:${item.email}" class="email-link">${item.email}</a>` : 'N/A'}</td>
-                    <td>${item.phone}</td>
-                </tr>
-            `).join('');
+            // Only render up to 100 rows at a time so the browser doesn't freeze if they select "ALL" with no location typed
+            const dataToRender = filteredData.slice(0, 100);
+
+            tableBody.innerHTML = dataToRender.map(item => {
+                // Elegant empty state handlers
+                const emailHtml = item.email ? `<a href="mailto:${item.email}" class="email-link">${item.email}</a>` : `<span class="empty-dash">—</span>`;
+                const phoneHtml = item.phone ? item.phone : `<span class="empty-dash">—</span>`;
+
+                return `
+                    <tr>
+                        <td><span class="customer-badge">${item.customer}</span></td>
+                        <td style="color: #64748b; font-size: 12px; font-weight: 600;">${item.group}</td>
+                        <td><strong>${item.vendor}</strong></td>
+                        <td>${emailHtml}</td>
+                        <td>${phoneHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Add a warning if we truncated the results
+            if (filteredData.length > 100) {
+                tableBody.innerHTML += `<tr><td colspan="5" class="no-data" style="padding: 1rem;">Showing first 100 results. Please use the search bar to narrow down the list.</td></tr>`;
+            }
         }
 
         // Trigger the load function when the DOM is ready
