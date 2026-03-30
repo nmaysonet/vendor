@@ -65,18 +65,108 @@
         .filter-select, .filter-input { padding: 10px 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; font-weight: 600; color: #333; outline: none; transition: border-color 0.2s; width: 100%; background: #f9fafc; }
         .filter-select:focus, .filter-input:focus { border-color: var(--gold); background: #fff; box-shadow: 0 0 0 2px rgba(255, 198, 0, 0.2); }
         
-        /* Tables & Content */
-        .table-wrapper { background: #fff; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); padding: 20px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-        th { background: #f4f6f9; padding: 12px; color: #555; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid var(--border); font-weight: 700; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
-        tr:hover td { background-color: #fcfcfc; }
-        
-        .customer-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; background: #e2e8f0; color: #475569; }
-        a.email-link { color: #0066cc; font-weight: 700; }
+        /* Tile Grid Layout */
+        .tile-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 20px; 
+            padding-top: 10px;
+            padding-bottom: 30px;
+        }
+
+        .vendor-tile {
+            background: #fff;
+            padding: 25px 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--gold);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-top-color 0.2s ease;
+        }
+
+        .vendor-tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.12);
+            border-top-color: #000000;
+        }
+
+        .tile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .customer-badge { 
+            display: inline-block; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            background: #e2e8f0; 
+            color: #475569; 
+        }
+
+        .vendor-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .vendor-location {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .divider {
+            border: 0;
+            border-top: 1px dashed #e2e8f0;
+            margin: auto 0 15px 0; /* Pushes contact info to the bottom if names are short */
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .contact-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contact-icon {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        a.email-link { color: #0066cc; font-weight: 700; word-break: break-all; }
         a.email-link:hover { text-decoration: underline; }
-        .no-data { text-align: center; padding: 3rem; color: #888; font-style: italic; font-size: 14px; }
+        
+        .no-data-msg { 
+            grid-column: 1 / -1; 
+            text-align: center; 
+            padding: 3rem; 
+            color: #888; 
+            font-style: italic; 
+            font-size: 15px; 
+            background: #fff;
+            border-radius: 6px;
+            border: 1px dashed #ccc;
+        }
         .empty-dash { color: #cbd5e1; font-weight: 800; }
+
     </style>
 </head>
 <body>
@@ -149,32 +239,20 @@
                     <label for="customer-select">Customer Group</label>
                     <select id="customer-select" class="filter-select" onchange="handleCustomerChange()">
                         <option value="ALL">All Customers</option>
-                        </select>
+                    </select>
                 </div>
 
                 <div class="input-group" style="flex: 1.5;">
                     <label for="location-search">Branch / Location Search</label>
-                    <input type="text" id="location-search" class="filter-input" list="locations" placeholder="Type or select a location..." oninput="renderTable()">
+                    <input type="text" id="location-search" class="filter-input" list="locations" placeholder="Type or select a location..." oninput="renderTiles()">
                     <datalist id="locations"></datalist>
                 </div>
             </div>
             
-            <div class="table-wrapper">
-                <table id="vendor-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 15%;">Customer</th>
-                            <th style="width: 25%;">Location / Group</th>
-                            <th style="width: 25%;">Vendor Name</th>
-                            <th style="width: 20%;">Contact Email</th>
-                            <th style="width: 15%;">Contact Phone</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        <tr><td colspan="5" class="no-data">Initializing Data Fetch...</td></tr>
-                    </tbody>
-                </table>
+            <div id="vendor-grid" class="tile-grid">
+                <div class="no-data-msg">Initializing Data Fetch...</div>
             </div>
+            
         </div>
     </div>
 
@@ -186,12 +264,12 @@
         const customerSelect = document.getElementById('customer-select');
         const searchInput = document.getElementById('location-search');
         const dataList = document.getElementById('locations');
-        const tableBody = document.getElementById('table-body');
+        const gridContainer = document.getElementById('vendor-grid');
 
         // 1. Fetch and Parse the Excel File
         async function loadExcelFile() {
             try {
-                tableBody.innerHTML = '<tr><td colspan="5" class="no-data">Loading vendor network...</td></tr>';
+                gridContainer.innerHTML = '<div class="no-data-msg">Loading vendor network...</div>';
                 
                 const response = await fetch('./vendor_locator.xlsx');
                 
@@ -200,9 +278,7 @@
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 
-                // 2. Extract data, format it, and push to the master array
                 workbook.SheetNames.forEach(sheetName => {
-                    // Ignore empty or hidden sheets if any
                     const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
                     if (sheetData.length > 0) {
                         uniqueCustomers.add(sheetName);
@@ -211,24 +287,21 @@
                     }
                 });
 
-                // 3. Initialize UI
                 populateCustomerDropdown();
                 updateLocationDropdown(); 
-                renderTable(); 
+                renderTiles(); 
 
             } catch (error) {
                 console.error("Error loading Excel file:", error);
-                tableBody.innerHTML = `<tr><td colspan="5" class="no-data" style="color: #d9534f;"><b>Error:</b> Could not load vendor_locator.xlsx. <br><br>Make sure the file is in the same folder. (Remember to host this on a server to bypass local CORS restrictions).</td></tr>`;
+                gridContainer.innerHTML = `<div class="no-data-msg" style="color: #d9534f;"><b>Error:</b> Could not load vendor_locator.xlsx. <br><br>Make sure the file is in the same folder and hosted on a server to prevent CORS blocking.</div>`;
             }
         }
 
-        // Map the Excel columns to our master object
         function formatExcelData(jsonArray, customerName) {
             return jsonArray.map(row => {
                 let emailRaw = (row['Contact Email'] || '').toString().trim();
                 let phoneRaw = (row['Contact Phone#'] || '').toString().trim();
 
-                // Clean up "N/A" entries to be empty strings for cleaner logic later
                 if (emailRaw.toUpperCase() === 'N/A') emailRaw = '';
                 if (phoneRaw.toUpperCase() === 'N/A') phoneRaw = '';
 
@@ -239,11 +312,10 @@
                     email: emailRaw,
                     phone: phoneRaw
                 };
-            }).filter(item => item.group !== ''); // Drop rows that have no location
+            }).filter(item => item.group !== ''); 
         }
 
         function populateCustomerDropdown() {
-            // Keep the "ALL" option, add the dynamic ones
             Array.from(uniqueCustomers).sort().forEach(cust => {
                 const option = document.createElement('option');
                 option.value = cust;
@@ -253,10 +325,9 @@
         }
 
         function handleCustomerChange() {
-            // Clear the location search so they aren't stuck with a search for a different customer
             searchInput.value = ''; 
             updateLocationDropdown();
-            renderTable();
+            renderTiles();
         }
 
         function updateLocationDropdown() {
@@ -277,7 +348,7 @@
             });
         }
 
-        function renderTable() {
+        function renderTiles() {
             const selectedCustomer = customerSelect.value;
             const searchTerm = searchInput.value.toLowerCase();
 
@@ -295,35 +366,47 @@
             // Render Output
             if (filteredData.length === 0) {
                 if(searchTerm === '') {
-                    tableBody.innerHTML = '<tr><td colspan="5" class="no-data">Select a location to view vendors.</td></tr>';
+                    gridContainer.innerHTML = '<div class="no-data-msg">Select a location group to view available vendors.</div>';
                 } else {
-                    tableBody.innerHTML = '<tr><td colspan="5" class="no-data">No vendors found matching your filters.</td></tr>';
+                    gridContainer.innerHTML = '<div class="no-data-msg">No vendors found matching your current filters.</div>';
                 }
                 return;
             }
 
-            // Only render up to 100 rows at a time so the browser doesn't freeze if they select "ALL" with no location typed
             const dataToRender = filteredData.slice(0, 100);
 
-            tableBody.innerHTML = dataToRender.map(item => {
-                // Elegant empty state handlers
-                const emailHtml = item.email ? `<a href="mailto:${item.email}" class="email-link">${item.email}</a>` : `<span class="empty-dash">—</span>`;
-                const phoneHtml = item.phone ? item.phone : `<span class="empty-dash">—</span>`;
+            gridContainer.innerHTML = dataToRender.map(item => {
+                const emailHtml = item.email ? `<a href="mailto:${item.email}" class="email-link">${item.email}</a>` : `<span class="empty-dash">No email on file</span>`;
+                const phoneHtml = item.phone ? `<strong>${item.phone}</strong>` : `<span class="empty-dash">No phone on file</span>`;
 
                 return `
-                    <tr>
-                        <td><span class="customer-badge">${item.customer}</span></td>
-                        <td style="color: #64748b; font-size: 12px; font-weight: 600;">${item.group}</td>
-                        <td><strong>${item.vendor}</strong></td>
-                        <td>${emailHtml}</td>
-                        <td>${phoneHtml}</td>
-                    </tr>
+                    <div class="vendor-tile">
+                        <div class="tile-header">
+                            <span class="customer-badge">${item.customer}</span>
+                        </div>
+                        <div class="vendor-name">${item.vendor}</div>
+                        <div class="vendor-location">
+                            <span>📍</span> ${item.group}
+                        </div>
+                        
+                        <hr class="divider">
+                        
+                        <div class="contact-info">
+                            <div class="contact-row">
+                                <span class="contact-icon">✉️</span>
+                                <div>${emailHtml}</div>
+                            </div>
+                            <div class="contact-row">
+                                <span class="contact-icon">📞</span>
+                                <div>${phoneHtml}</div>
+                            </div>
+                        </div>
+                    </div>
                 `;
             }).join('');
 
-            // Add a warning if we truncated the results
             if (filteredData.length > 100) {
-                tableBody.innerHTML += `<tr><td colspan="5" class="no-data" style="padding: 1rem;">Showing first 100 results. Please use the search bar to narrow down the list.</td></tr>`;
+                gridContainer.innerHTML += `<div class="no-data-msg">Showing first 100 results. Please use the search bar to narrow down the list.</div>`;
             }
         }
 
