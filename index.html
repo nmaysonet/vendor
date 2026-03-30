@@ -310,7 +310,7 @@
         const dataList = document.getElementById('locations');
         const gridContainer = document.getElementById('vendor-grid');
 
-        // General function to replace the button row with the revealed text
+        // Replace the button row with the revealed text
         window.revealInfo = function(btnElement, text, icon) {
             const parent = btnElement.parentElement;
             parent.innerHTML = `<div class="btn-revealed">${icon} ${text}</div>`;
@@ -321,7 +321,9 @@
             try {
                 gridContainer.innerHTML = '<div class="no-data-msg">Loading vendor network...</div>';
                 
-                const response = await fetch('./vendor_locator.xlsx');
+                // FIXED CACHING ISSUE: Added a timestamp to the URL and no-store to force browser to grab the freshest file
+                const fileUrl = './vendor_locator.xlsx?v=' + new Date().getTime();
+                const response = await fetch(fileUrl, { cache: 'no-store' });
                 
                 if (!response.ok) throw new Error('File not found or access denied');
                 
@@ -347,18 +349,32 @@
             }
         }
 
+        // Improved Column Fetcher to prevent headers with accidental spaces in Excel from breaking the app
         function formatExcelData(jsonArray, customerName) {
             return jsonArray.map(row => {
-                let emailRaw = (row['Contact Email'] || '').toString().trim();
-                let phoneRaw = (row['Contact Phone#'] || '').toString().trim();
+                const keys = Object.keys(row);
+                
+                // Helper to search keys case-insensitively and ignoring extra spaces
+                const getColumnData = (possibleHeaders) => {
+                    for (let header of possibleHeaders) {
+                        const foundKey = keys.find(k => k.trim().toLowerCase() === header.toLowerCase());
+                        if (foundKey) return (row[foundKey] || '').toString().trim();
+                    }
+                    return '';
+                };
+
+                let emailRaw = getColumnData(['Contact Email', 'Email']);
+                let phoneRaw = getColumnData(['Contact Phone#', 'Contact Phone', 'Phone']);
+                let groupRaw = getColumnData(['Group', 'Location']);
+                let vendorRaw = getColumnData(['Vendor', 'Vendor Name']);
 
                 if (emailRaw.toUpperCase() === 'N/A') emailRaw = '';
                 if (phoneRaw.toUpperCase() === 'N/A') phoneRaw = '';
 
                 return {
                     customer: customerName,
-                    group: (row['Group'] || '').toString().trim(),
-                    vendor: (row['Vendor'] || '').toString().trim(),
+                    group: groupRaw,
+                    vendor: vendorRaw,
                     email: emailRaw,
                     phone: phoneRaw
                 };
