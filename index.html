@@ -21,6 +21,7 @@
             --sidebar-hover: #4a4b50;
             --gold: #FFC600; 
             --gold-hover: #e5b200;
+            --low-green: #5cb85c;
             --text-light: #f1f1f1;
             --border: #e0e0e0;
         }
@@ -68,7 +69,7 @@
         /* Tile Grid Layout */
         .tile-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
             gap: 20px; 
             padding-top: 10px;
             padding-bottom: 30px;
@@ -130,30 +131,61 @@
         .divider {
             border: 0;
             border-top: 1px dashed #e2e8f0;
-            margin: auto 0 15px 0; /* Pushes contact info to the bottom if names are short */
+            margin: auto 0 15px 0; 
         }
 
-        .contact-info {
+        /* Tile Action Buttons */
+        .tile-actions {
             display: flex;
-            flex-direction: column;
             gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn-dispatch, .btn-call, .btn-disabled {
+            flex: 1;
+            padding: 12px 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Green Dispatch Button */
+        .btn-dispatch { background-color: var(--low-green); color: white; }
+        .btn-dispatch:hover { background-color: #4cae4c; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+
+        /* Dark Call Button */
+        .btn-call { background-color: var(--sidebar-bg); color: white; }
+        .btn-call:hover { background-color: #2a2b30; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+        
+        /* State when Call Button is clicked and revealed */
+        .btn-call.revealed {
+            background-color: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            cursor: text;
+            user-select: all; /* Allows easy highlight/copy */
+            transform: none;
+            box-shadow: none;
             font-size: 13px;
         }
 
-        .contact-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        /* Disabled State for missing info */
+        .btn-disabled {
+            background-color: #f1f5f9;
+            color: #cbd5e1;
+            cursor: not-allowed;
         }
 
-        .contact-icon {
-            font-size: 16px;
-            opacity: 0.7;
-        }
-
-        a.email-link { color: #0066cc; font-weight: 700; word-break: break-all; }
-        a.email-link:hover { text-decoration: underline; }
-        
         .no-data-msg { 
             grid-column: 1 / -1; 
             text-align: center; 
@@ -165,7 +197,6 @@
             border-radius: 6px;
             border: 1px dashed #ccc;
         }
-        .empty-dash { color: #cbd5e1; font-weight: 800; }
 
     </style>
 </head>
@@ -265,6 +296,14 @@
         const searchInput = document.getElementById('location-search');
         const dataList = document.getElementById('locations');
         const gridContainer = document.getElementById('vendor-grid');
+
+        // JS Function triggered by clicking the CALL button
+        window.revealPhone = function(btnElement, phoneNumber) {
+            btnElement.innerHTML = `📞 ${phoneNumber}`;
+            btnElement.classList.add('revealed');
+            // Remove the click event so it doesn't trigger again, allowing the user to select/copy the text
+            btnElement.onclick = null; 
+        };
 
         // 1. Fetch and Parse the Excel File
         async function loadExcelFile() {
@@ -376,8 +415,16 @@
             const dataToRender = filteredData.slice(0, 100);
 
             gridContainer.innerHTML = dataToRender.map(item => {
-                const emailHtml = item.email ? `<a href="mailto:${item.email}" class="email-link">${item.email}</a>` : `<span class="empty-dash">No email on file</span>`;
-                const phoneHtml = item.phone ? `<strong>${item.phone}</strong>` : `<span class="empty-dash">No phone on file</span>`;
+                // Determine Button States based on data availability
+                const dispatchBtnHtml = item.email 
+                    ? `<a href="mailto:${item.email}" class="btn-dispatch" title="${item.email}">✉️ DISPATCH</a>` 
+                    : `<div class="btn-disabled">✉️ NO EMAIL</div>`;
+
+                // Use replace to ensure no syntax errors break the JS string execution if quotes exist in the phone number string
+                const safePhone = item.phone.replace(/'/g, "\\'");
+                const callBtnHtml = item.phone 
+                    ? `<button class="btn-call" onclick="revealPhone(this, '${safePhone}')">📞 CALL</button>` 
+                    : `<div class="btn-disabled">📞 NO PHONE</div>`;
 
                 return `
                     <div class="vendor-tile">
@@ -391,15 +438,9 @@
                         
                         <hr class="divider">
                         
-                        <div class="contact-info">
-                            <div class="contact-row">
-                                <span class="contact-icon">✉️</span>
-                                <div>${emailHtml}</div>
-                            </div>
-                            <div class="contact-row">
-                                <span class="contact-icon">📞</span>
-                                <div>${phoneHtml}</div>
-                            </div>
+                        <div class="tile-actions">
+                            ${dispatchBtnHtml}
+                            ${callBtnHtml}
                         </div>
                     </div>
                 `;
