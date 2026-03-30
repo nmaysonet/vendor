@@ -37,7 +37,6 @@
         
         /* Sidebar Truck Graphic & Animations */
         .sidebar-truck { margin-top: auto; padding: 30px; text-align: center; border-top: 1px solid #4a4b50; background: #2a2b30; }
-        .sidebar-contact { margin-top: 15px; font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.5px; }
         
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes bump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
@@ -137,12 +136,18 @@
         /* Tile Action Buttons */
         .tile-actions {
             display: flex;
+            flex-direction: column;
             gap: 10px;
             margin-top: auto;
         }
 
-        .btn-dispatch, .btn-call, .btn-disabled {
-            flex: 1;
+        .action-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-dispatch, .btn-view, .btn-call, .btn-disabled {
             padding: 12px 10px;
             border: none;
             border-radius: 4px;
@@ -159,28 +164,39 @@
             letter-spacing: 0.5px;
         }
 
-        /* Green Dispatch Button */
-        .btn-dispatch { background-color: var(--low-green); color: white; }
+        .btn-dispatch { background-color: var(--low-green); color: white; flex: 2; }
         .btn-dispatch:hover { background-color: #4cae4c; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
 
-        /* Dark Call Button */
-        .btn-call { background-color: var(--sidebar-bg); color: white; }
+        .btn-view { background-color: #e2e8f0; color: #475569; flex: 1; }
+        .btn-view:hover { background-color: #cbd5e1; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .btn-call { background-color: var(--sidebar-bg); color: white; flex: 1; }
         .btn-call:hover { background-color: #2a2b30; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
         
-        /* State when Call Button is clicked and revealed */
-        .btn-call.revealed {
+        /* Revealed State */
+        .btn-revealed {
+            flex: 1;
+            padding: 12px 10px;
             background-color: #f1f5f9;
             color: #334155;
             border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
             cursor: text;
             user-select: all; /* Allows easy highlight/copy */
-            transform: none;
-            box-shadow: none;
-            font-size: 13px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
         }
 
-        /* Disabled State for missing info */
+        /* Disabled State */
         .btn-disabled {
+            flex: 1;
+            width: 100%;
             background-color: #f1f5f9;
             color: #cbd5e1;
             cursor: not-allowed;
@@ -197,7 +213,6 @@
             border-radius: 6px;
             border: 1px dashed #ccc;
         }
-
     </style>
 </head>
 <body>
@@ -224,7 +239,6 @@
         </div>
         
         <div class="sidebar-truck">
-            <div style="font-weight: 800; color: var(--gold); letter-spacing: 1px; margin-bottom: 15px; font-size: 12px;">KEEP ON ROLLING</div>
             <svg width="140" height="70" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg" class="moving-truck-svg">
                 <line class="road-line" x1="0" y1="57" x2="120" y2="57" stroke="#4a4b50" stroke-width="2" stroke-dasharray="10 5"/>
                 <g class="truck-body">
@@ -254,7 +268,6 @@
                     <line x1="85" y1="50" x2="99" y2="50" stroke="#888" stroke-width="1"/>
                 </g>
             </svg>
-            <div class="sidebar-contact">sales@ameritfleet.com</div>
         </div>
     </div>
 
@@ -297,12 +310,10 @@
         const dataList = document.getElementById('locations');
         const gridContainer = document.getElementById('vendor-grid');
 
-        // JS Function triggered by clicking the CALL button
-        window.revealPhone = function(btnElement, phoneNumber) {
-            btnElement.innerHTML = `📞 ${phoneNumber}`;
-            btnElement.classList.add('revealed');
-            // Remove the click event so it doesn't trigger again, allowing the user to select/copy the text
-            btnElement.onclick = null; 
+        // General function to replace the button row with the revealed text
+        window.revealInfo = function(btnElement, text, icon) {
+            const parent = btnElement.parentElement;
+            parent.innerHTML = `<div class="btn-revealed">${icon} ${text}</div>`;
         };
 
         // 1. Fetch and Parse the Excel File
@@ -415,16 +426,25 @@
             const dataToRender = filteredData.slice(0, 100);
 
             gridContainer.innerHTML = dataToRender.map(item => {
-                // Determine Button States based on data availability
-                const dispatchBtnHtml = item.email 
-                    ? `<a href="mailto:${item.email}" class="btn-dispatch" title="${item.email}">✉️ DISPATCH</a>` 
-                    : `<div class="btn-disabled">✉️ NO EMAIL</div>`;
-
-                // Use replace to ensure no syntax errors break the JS string execution if quotes exist in the phone number string
+                
+                // Escape strings to prevent HTML breakage
+                const safeEmail = item.email.replace(/'/g, "\\'");
                 const safePhone = item.phone.replace(/'/g, "\\'");
-                const callBtnHtml = item.phone 
-                    ? `<button class="btn-call" onclick="revealPhone(this, '${safePhone}')">📞 CALL</button>` 
-                    : `<div class="btn-disabled">📞 NO PHONE</div>`;
+
+                // Email Row: Dispatch and View
+                const emailActionHtml = item.email 
+                    ? `<div class="action-row">
+                           <a href="mailto:${item.email}" class="btn-dispatch" title="Open Email Draft">✉️ DISPATCH</a>
+                           <button class="btn-view" onclick="revealInfo(this, '${safeEmail}', '✉️')" title="View Email Address">👁️ VIEW</button>
+                       </div>` 
+                    : `<div class="action-row"><div class="btn-disabled">✉️ NO EMAIL</div></div>`;
+
+                // Phone Row: Call 
+                const phoneActionHtml = item.phone 
+                    ? `<div class="action-row">
+                           <button class="btn-call" onclick="revealInfo(this, '${safePhone}', '📞')" title="View Phone Number">📞 CALL</button>
+                       </div>` 
+                    : `<div class="action-row"><div class="btn-disabled">📞 NO PHONE</div></div>`;
 
                 return `
                     <div class="vendor-tile">
@@ -439,8 +459,8 @@
                         <hr class="divider">
                         
                         <div class="tile-actions">
-                            ${dispatchBtnHtml}
-                            ${callBtnHtml}
+                            ${emailActionHtml}
+                            ${phoneActionHtml}
                         </div>
                     </div>
                 `;
