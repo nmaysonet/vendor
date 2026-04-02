@@ -6,16 +6,20 @@
     <title>workFLOW + | Vendor Locator</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
     <style>
         /* Global Styles & Reset */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Raleway', sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; color: #333; overflow: hidden; }
         a { text-decoration: none; }
         
-        /* Variables from workFLOW+ */
+        /* Variables */
         :root {
             --sidebar-bg: #3a3b40;
             --sidebar-hover: #4a4b50;
@@ -24,7 +28,30 @@
             --low-green: #5cb85c;
             --text-light: #f1f1f1;
             --border: #e0e0e0;
+            --urgent-red: #d9534f;
         }
+
+        /* --- LOGIN OVERLAY --- */
+        #login-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--sidebar-bg); z-index: 99999; 
+            display: flex; align-items: center; justify-content: center; flex-direction: column; 
+        }
+        .login-box { 
+            background: white; padding: 40px; border-radius: 8px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; width: 350px; 
+        }
+        .login-box h2 { margin-bottom: 20px; color: #333; font-weight: 800; }
+        .login-box input { 
+            width: 100%; padding: 12px; margin-bottom: 15px; 
+            border: 1px solid #ccc; border-radius: 4px; font-size: 16px; font-family: 'Raleway', sans-serif;
+        }
+        .login-box button { 
+            width: 100%; padding: 12px; background: var(--gold); border: none; 
+            font-weight: 800; font-size: 14px; border-radius: 4px; cursor: pointer; transition: 0.2s; 
+        }
+        .login-box button:hover { background: var(--gold-hover); }
+        .login-error { color: var(--urgent-red); margin-bottom: 15px; font-size: 13px; font-weight: bold; display: none; }
 
         /* Sidebar */
         .sidebar { width: 280px; background-color: var(--sidebar-bg); color: var(--text-light); display: flex; flex-direction: column; flex-shrink: 0; }
@@ -33,9 +60,10 @@
         .sidebar-header .logo-plus { color: var(--gold); font-size: 34px; font-weight: 800; margin-left: 3px; line-height: 1; }
         
         .menu-item { padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a4b50; font-size: 14px; font-weight: 600; transition: 0.2s; }
+        .menu-item:hover { background-color: var(--sidebar-hover); color: var(--gold); }
         .menu-item.active { background-color: var(--sidebar-hover); color: var(--gold); border-left: 4px solid var(--gold); }
         
-        /* Sidebar Truck Graphic & Animations */
+        /* Sidebar Truck Graphic */
         .sidebar-truck { margin-top: auto; padding: 30px; text-align: center; border-top: 1px solid #4a4b50; background: #2a2b30; }
         
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -147,12 +175,26 @@
         .btn-revealed-sm { background-color: #fff; color: #334155; border: 1px solid #cbd5e1; cursor: text; user-select: all; flex: 2; font-size: 11px; }
         .btn-disabled-sm { background-color: #fff; color: #cbd5e1; cursor: not-allowed; border: 1px dashed #e2e8f0; }
 
-        .no-data-msg { grid-column: 1 / -1; text-align: center; padding: 3rem; color: #888; font-style: italic; font-size: 15px; background: #fff; border-radius: 6px; border: 1px dashed #ccc; }
-        .empty-prompt { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; grid-column: 1 / -1; padding: 4rem; color: #64748b; font-size: 16px; font-weight: 500; text-align: center; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .empty-prompt svg { width: 48px; height: 48px; fill: #cbd5e1; }
+        .no-data-msg { grid-column: 1 / -1; text-align: center; padding: 3rem; color: #888; font-size: 16px; font-weight: 600; background: #fff; border-radius: 6px; border: 1px dashed #ccc; }
     </style>
 </head>
 <body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <svg class="logo-spin" width="50" height="50" viewBox="0 0 100 100" style="margin-bottom:15px;">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--gold)" stroke-width="10"/>
+                <circle cx="50" cy="50" r="10" fill="var(--gold)"/>
+                <g stroke="var(--gold)" stroke-width="10" stroke-linecap="round">
+                    <line x1="50" y1="50" x2="50" y2="15" /><line x1="50" y1="50" x2="83" y2="39" /><line x1="50" y1="50" x2="70" y2="78" /><line x1="50" y1="50" x2="30" y2="78" /><line x1="50" y1="50" x2="17" y2="39" />
+                </g>
+            </svg>
+            <h2>workFLOW+ Login</h2>
+            <div id="login-error" class="login-error">Incorrect Password</div>
+            <input type="password" id="login-pass" placeholder="Enter Password" onkeypress="if(event.key === 'Enter') checkLogin()">
+            <button onclick="checkLogin()">ENTER</button>
+        </div>
+    </div>
 
     <div class="sidebar">
         <div class="sidebar-header">
@@ -171,9 +213,12 @@
             <span class="logo-plus">+</span>
         </div>
 
-        <div class="menu-item active">
-            Vendor Search
-        </div>
+        <div class="menu-item" onclick="window.location.href='index.html'">Home Dashboard</div>
+        <div class="menu-item" onclick="window.location.href='index.html'">PM Queue</div>
+        <div class="menu-item" onclick="window.location.href='index.html'">Vended Repair Queue</div>
+        <div class="menu-item" onclick="window.location.href='index.html'">ERS Queue</div>
+        <div class="menu-item" onclick="window.location.href='index.html'">Consolidation Summary</div>
+        <div class="menu-item active">Vendor Search</div>
         
         <div class="sidebar-truck">
             <svg width="140" height="70" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg" class="moving-truck-svg">
@@ -213,7 +258,8 @@
             <div class="top-title">National Vendor Network</div>
         </div>
 
-        <div class="view-section">
+        <div class="view-section active">
+            
             <div class="filter-card">
                 <div class="input-group" style="flex: 0.5;">
                     <label for="customer-select">Customer Group</label>
@@ -232,10 +278,53 @@
             <div id="vendor-grid" class="tile-grid">
                 <div class="no-data-msg">Initializing Data Fetch...</div>
             </div>
+            
         </div>
     </div>
 
     <script>
+        const MASTER_EMAIL = "maintenance@ameritfleet.com";
+
+        function checkLogin() {
+            const passwordInput = document.getElementById('login-pass').value;
+            const errorText = document.getElementById('login-error');
+            
+            errorText.style.display = 'none';
+
+            firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, passwordInput)
+                .then((userCredential) => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    loadExcelFile(); 
+                })
+                .catch((error) => {
+                    errorText.innerText = "Incorrect Password";
+                    errorText.style.display = 'block';
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!firebase.apps.length) {
+                firebase.initializeApp({
+                    apiKey: "AIzaSyCr3VAldI-pPCb7APx3rJAEZvf_nl0iz1g",
+                    authDomain: "workflow-dashboard-e6134.firebaseapp.com",
+                    databaseURL: "https://workflow-dashboard-e6134-default-rtdb.firebaseio.com",
+                    projectId: "workflow-dashboard-e6134",
+                    storageBucket: "workflow-dashboard-e6134.firebasestorage.app",
+                    messagingSenderId: "641710248116",
+                    appId: "1:641710248116:web:1546701879d573041447e1"
+                });
+            }
+
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    loadExcelFile();
+                } else {
+                    document.getElementById('login-overlay').style.display = 'flex';
+                }
+            });
+        });
+
         // --- APP LOGIC --- //
         let allVendors = []; 
         let allContacts = {}; 
@@ -246,32 +335,38 @@
         const dataList = document.getElementById('locations');
         const gridContainer = document.getElementById('vendor-grid');
 
-        // Replaces the parent row with revealed text (Used for Vendors)
         window.revealRowInfo = function(btnElement, text, icon) {
             const parent = btnElement.parentElement;
             parent.innerHTML = `<div class="btn-revealed">${icon} ${text}</div>`;
         };
 
-        // Replaces ONLY the button clicked (Used for Compressed Contact Tiles)
         window.revealSelfInfo = function(btnElement, text, icon) {
             btnElement.outerHTML = `<div class="btn-revealed-sm">${icon} ${text}</div>`;
         };
 
         async function loadExcelFile() {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+
             try {
                 gridContainer.innerHTML = '<div class="no-data-msg">Loading vendor and branch network...</div>';
                 
-                // Cache Buster
-                const fileUrl = './vendor_locator.xlsx?v=' + new Date().getTime();
-                const response = await fetch(fileUrl, { cache: 'no-store' });
+                const storageRef = firebase.storage().ref().child('vendor_locator.xlsx');
+                const downloadUrl = await storageRef.getDownloadURL();
                 
-                if (!response.ok) throw new Error('File not found or access denied');
+                const fetchUrl = downloadUrl + (downloadUrl.includes('?') ? '&' : '?') + `_=${Date.now()}`;
+                
+                const response = await fetch(fetchUrl, { 
+                    cache: 'no-store',
+                    signal: controller.signal
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status} - File not found or access denied`);
                 
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 
                 workbook.SheetNames.forEach(sheetName => {
-                    // Separate routing: Contacts Tab vs Vendor Tabs
                     if (sheetName.toLowerCase().includes('contact')) {
                         formatContactData(XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]));
                     } else {
@@ -286,22 +381,23 @@
 
                 populateCustomerDropdown();
                 updateLocationDropdown(); 
-                
-                // Show standard prompt instead of rendering all tiles immediately
                 renderTiles(); 
 
             } catch (error) {
                 console.error("Error loading Excel file:", error);
-                gridContainer.innerHTML = `<div class="no-data-msg" style="color: #d9534f;"><b>Error:</b> Could not load vendor_locator.xlsx.</div>`;
+                const errorMsg = error.name === 'AbortError' 
+                    ? 'Firebase Storage request timed out' 
+                    : `Firebase Storage fetch failed: ${error.message}`;
+                gridContainer.innerHTML = `<div class="no-data-msg" style="color: #d9534f;"><b>Error:</b> ${errorMsg}</div>`;
+            } finally {
+                clearTimeout(timeout);
             }
         }
 
-        // Parses and Normalizes Contact Info
         function formatContactData(jsonArray) {
             jsonArray.forEach(row => {
                 const keys = Object.keys(row);
                 
-                // Fuzzy matcher to bypass accidental spaces in Excel headers
                 const getCol = (possibleHeaders) => {
                     for (let header of possibleHeaders) {
                         const foundKey = keys.find(k => k.trim().toLowerCase() === header.toLowerCase());
@@ -310,9 +406,7 @@
                     return '';
                 };
 
-                // Extract branch number and strip trailing ".0" if Excel parsed it as float
                 let rawBranch = getCol(['Branch Number', 'Branch', 'BranchNum']).replace(/\.0$/, '');
-                // Strip all non-digits to get the normalized code (e.g. "120-38" becomes "12038")
                 let normBranch = rawBranch.replace(/\D/g, '');
                 
                 if (!normBranch) return;
@@ -333,7 +427,6 @@
             });
         }
 
-        // Parses Vendor Info
         function formatVendorData(jsonArray, customerName) {
             return jsonArray.map(row => {
                 const keys = Object.keys(row);
@@ -394,7 +487,6 @@
             });
         }
 
-        // HELPER: Generates the HTML for the compressed Contact Action buttons
         function generateMiniAction(val, icon, type) {
             if (!val) return `<div class="btn-disabled-sm">${icon} N/A</div>`;
             
@@ -406,7 +498,6 @@
             }
         }
 
-        // HELPER: Builds the Red Contact Tile
         function buildContactTile(contact, groupStr) {
             return `
                 <div class="vendor-tile contact-tile">
@@ -451,33 +542,29 @@
             const selectedCustomer = customerSelect.value;
             const searchTerm = searchInput.value.toLowerCase();
 
-            // PREVENT RENDER UNTIL BOTH ARE SELECTED
-            if (selectedCustomer === 'ALL' || searchTerm.trim() === '') {
-                gridContainer.innerHTML = `
-                    <div class="empty-prompt">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                            <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/>
-                        </svg>
-                        <div>Please select a Customer Group and type/select a Branch to view results.</div>
-                    </div>
-                `;
+            // PREVENT INITIAL DATA DUMP
+            if (selectedCustomer === 'ALL' && searchTerm.trim() === '') {
+                gridContainer.innerHTML = '<div class="no-data-msg">Please select a Customer Group or search for a Branch/Location to view vendors.</div>';
                 return;
             }
 
-            // Apply Filters
-            let filteredData = allVendors.filter(item => item.customer === selectedCustomer);
-            filteredData = filteredData.filter(item => item.group.toLowerCase().includes(searchTerm));
+            let filteredData = allVendors;
+            
+            if (selectedCustomer !== 'ALL') {
+                filteredData = filteredData.filter(item => item.customer === selectedCustomer);
+            }
+            if (searchTerm !== '') {
+                filteredData = filteredData.filter(item => item.group.toLowerCase().includes(searchTerm));
+            }
 
             if (filteredData.length === 0) {
-                gridContainer.innerHTML = '<div class="no-data-msg">No vendors or contacts found matching this location.</div>';
+                gridContainer.innerHTML = '<div class="no-data-msg">No vendors found matching your current filters.</div>';
                 return;
             }
 
             const dataToRender = filteredData.slice(0, 100);
             let htmlOutput = '';
 
-            // 1. Identify unique branches in the filtered results & append matching Contact Tiles FIRST
             const uniqueRenderedGroups = [...new Set(dataToRender.map(item => item.group))];
             
             uniqueRenderedGroups.forEach(groupStr => {
@@ -492,7 +579,6 @@
                 }
             });
 
-            // 2. Append the standard Vendor Tiles
             htmlOutput += dataToRender.map(item => {
                 const safeEmail = item.email.replace(/'/g, "\\'");
                 const safePhone = item.phone.replace(/'/g, "\\'");
@@ -528,15 +614,12 @@
                 `;
             }).join('');
 
-            // Inject all HTML
             gridContainer.innerHTML = htmlOutput;
 
             if (filteredData.length > 100) {
-                gridContainer.innerHTML += `<div class="no-data-msg">Showing first 100 results. Please narrow down your search.</div>`;
+                gridContainer.innerHTML += `<div class="no-data-msg">Showing first 100 results. Please use the search bar to narrow down the list.</div>`;
             }
         }
-
-        window.addEventListener('DOMContentLoaded', loadExcelFile);
     </script>
 </body>
 </html>
